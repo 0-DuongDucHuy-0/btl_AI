@@ -36,6 +36,7 @@ class PerceptronModel(object):
         Returns: 1 or -1
         """
         "*** YOUR CODE HERE ***"
+        return 2 * (nn.as_scalar(self.run(x)) >= 0) - 1
 
     def train(self, dataset):
         """
