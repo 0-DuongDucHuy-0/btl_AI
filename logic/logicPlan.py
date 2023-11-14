@@ -241,7 +241,7 @@ def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[
         return None
     
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return PropSymbolExpr(pacman_str, x, y, time=now) % disjoin(possible_causes)
     "*** END YOUR CODE HERE ***"
 
 
@@ -312,7 +312,27 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
     pacphysics_sentences = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    for x, y in all_coords:
+        pacphysics_sentences.append(PropSymbolExpr(wall_str, x, y) >> ~PropSymbolExpr(pacman_str, x, y, time=t))
+
+    list_pacman = []
+    for x, y in non_outer_wall_coords:
+        list_pacman.append(PropSymbolExpr(pacman_str, x, y, time=t))
+    pacphysics_sentences.append(exactlyOne(list_pacman))
+
+    list_actions = []
+    for action in DIRECTIONS:
+        list_actions.append(PropSymbolExpr(action, time=t))
+    pacphysics_sentences.append(exactlyOne(list_actions))
+
+    if sensorModel != None:
+        pacphysics_sentences.append(sensorModel(t, non_outer_wall_coords))
+
+    if t > 0:
+        if successorAxioms != None:
+            pacphysics_sentences.append(successorAxioms(t, walls_grid, non_outer_wall_coords))
+
+    return conjoin(pacphysics_sentences)
     "*** END YOUR CODE HERE ***"
 
     return conjoin(pacphysics_sentences)
@@ -346,7 +366,15 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     KB.append(conjoin(map_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    for i in range(0, 2):
+        KB.append(pacphysicsAxioms(i, all_coords, non_outer_wall_coords, walls_grid, None, allLegalSuccessorAxioms))
+
+    KB.append(logic.PropSymbolExpr(pacman_str, x0, y0, time=0))
+    KB.append(logic.PropSymbolExpr(action1, time=1))
+    KB.append(logic.PropSymbolExpr(action0, time=0))
+
+    return (findModel(logic.conjoin(KB) & logic.PropSymbolExpr(pacman_str, x1, y1, time=1)),
+            findModel(logic.conjoin(KB) & ~logic.PropSymbolExpr(pacman_str, x1, y1, time=1)))
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
