@@ -43,6 +43,14 @@ class PerceptronModel(object):
         Train the perceptron until convergence.
         """
         "*** YOUR CODE HERE ***"
+        shouldStop = False
+        while not shouldStop:
+            for x, y in dataset.iterate_once(batch_size=1):
+                if not self.get_prediction(x) == nn.as_scalar(y):
+                    self.w.update(x, nn.as_scalar(y))
+                    break
+            else:
+                shouldStop = True 
 
 class RegressionModel(object):
     """
