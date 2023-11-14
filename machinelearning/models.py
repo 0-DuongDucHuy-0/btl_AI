@@ -35,14 +35,28 @@ class PerceptronModel(object):
 
         Returns: 1 or -1
         """
-        "*** YOUR CODE HERE ***"
-        return 2 * (nn.as_scalar(self.run(x)) >= 0) - 1
+        prediction = self.run(x)  
+        scalar_prediction = nn.as_scalar(prediction)  
 
+        if scalar_prediction >= 0:  
+            return 1
+        else:
+            return -1
+
+            
     def train(self, dataset):
         """
         Train the perceptron until convergence.
         """
         "*** YOUR CODE HERE ***"
+        shouldStop = False
+        while not shouldStop:
+            for x, y in dataset.iterate_once(batch_size=1):
+                if not self.get_prediction(x) == nn.as_scalar(y):
+                    self.w.update(x, nn.as_scalar(y))
+                    break
+            else:
+                shouldStop = True 
 
 class RegressionModel(object):
     """
@@ -50,10 +64,19 @@ class RegressionModel(object):
     numbers to real numbers. The network should be sufficiently large to be able
     to approximate sin(x) on the interval [-2pi, 2pi] to reasonable precision.
     """
-    def __init__(self):
+     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-
+        self.learning_rate = 0.05
+        self.batch_size = 200
+        self.hidden_layer_size = 512
+        self.learnRate = 0.05
+        self.w1 = nn.Parameter(1, self.hidden_layer_size)
+        self.b1 = nn.Parameter(1, self.hidden_layer_size)
+        self.w2 = nn.Parameter(self.hidden_layer_size, 1)
+        self.b2 = nn.Parameter(1, 1)
+        self.parameters = [self.w1, self.b1,  self.w2, self.b2]
+        
     def run(self, x):
         """
         Runs the model for a batch of examples.
