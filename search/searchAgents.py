@@ -504,7 +504,7 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
 
     for food in foodGrid.asList():
         # Calculate distance
-        distance = abs(food[0]-position[0]) + abs(food[1]-position[1])
+        distance = abs(food[0] - position[0]) + abs(food[1] - position[1])
         # Update maxDist if the current distance is greater
         maxDist = max(maxDist, distance)
 
@@ -541,7 +541,7 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        return search.breadthFirstSearch(problem)
+        return search.aStarSearch(problem)
         util.raiseNotDefined()
 
 
@@ -579,6 +579,12 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x, y = state
 
         "*** YOUR CODE HERE ***"
+
+        _, goal = min((util.manhattanDistance(state, goal), goal) for goal in self.food.asList())
+
+        if state == goal:
+            return True
+        return False
         util.raiseNotDefined()
 
 
