@@ -138,22 +138,13 @@ class DigitClassificationModel(object):
 
     def __init__(self):
         # Initialize your model parameters here
-        self.batch_size = 2
+        self.batch_size = 5
         self.lr = -0.009
         self.w1 = nn.Parameter(784, 60)
         self.b1 = nn.Parameter(1, 60)
 
         self.w2 = nn.Parameter(60, 10)
         self.b2 = nn.Parameter(1, 10)
-
-        # self.w3 = nn.Parameter(128, 64)
-        # self.b3 = nn.Parameter(1, 64)
-
-        # self.w4 = nn.Parameter(64, 10)
-        # self.b4 = nn.Parameter(1, 10)
-
-        # self.params = [self.w1, self.b1, self.w2, self.b2,
-        #                self.w3, self.b3, self.w4, self.b4]
 
     def run(self, x):
         """
