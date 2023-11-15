@@ -184,7 +184,7 @@ class DigitClassificationModel(object):
         """
         Trains the model.
         """
-        loss = float('inf')
+        # loss = float('inf')
         valid_acc = 0
         while valid_acc < .97:
             for x, y in dataset.iterate_once(self.batch_size):
@@ -215,20 +215,18 @@ class LanguageIDModel(object):
         self.languages = ["English", "Spanish", "Finnish", "Dutch", "Polish"]
 
         # Initialize your model parameters here
+        self.batch_size = 10
         self.lr = .1
-        self.initial_w = nn.Parameter(self.num_chars, 256)
-        self.initial_b = nn.Parameter(1, 256)
+        self.init_w = nn.Parameter(self.num_chars, 300)
+        self.init_b = nn.Parameter(1, 300)
         
-        self.x_w = nn.Parameter(self.num_chars, 256)
-        self.h_w = nn.Parameter(256, 256)
-        self.b = nn.Parameter(1, 256)
+        self.x_w = nn.Parameter(self.num_chars, 300)
+        self.h_w = nn.Parameter(300, 300)
+        self.b = nn.Parameter(1, 300)
         
-        self.output_w = nn.Parameter(256, len(self.languages))
-        self.output_b = nn.Parameter(1, len(self.languages))
+        self.output_w = nn.Parameter(300, 5)
+        self.output_b = nn.Parameter(1, 5)
         
-        self.params = [self.initial_w, self.initial_b, self.x_w, self.h_w,
-                       self.b, self.output_w, self.output_b]
-
     def run(self, xs):
         """
         Runs the model for a batch of examples.
@@ -258,11 +256,15 @@ class LanguageIDModel(object):
             A node with shape (batch_size x 5) containing predicted scores
                 (also called logits)
         """
-        h_i = nn.ReLU(nn.AddBias(nn.Linear(xs[0], self.initial_w), self.initial_b))
-        for char in xs[1:]:
-            h_i = nn.ReLU(nn.AddBias(nn.Add(nn.Linear(char, self.x_w),\
-                          nn.Linear(h_i, self.h_w)), self.b))
-        output = nn.AddBias(nn.Linear(h_i, self.output_w), self.output_b)
+        
+        i = 0
+        while i < len(xs):
+            if i == 0:
+                node = nn.ReLU(nn.AddBias(nn.Linear(xs[0], self.init_w), self.init_b))
+            else:
+                node = nn.ReLU(nn.AddBias(nn.Add(nn.Linear(xs[i], self.x_w), nn.Linear(node, self.h_w)), self.b))
+            i += 1
+        output = nn.AddBias(nn.Linear(node, self.output_w), self.output_b)
         return output
 
     def get_loss(self, xs, y):
@@ -279,21 +281,23 @@ class LanguageIDModel(object):
             y: a node with shape (batch_size x 5)
         Returns: a loss node
         """
-        y_hat = self.run(xs)
-        return nn.SoftmaxLoss(y_hat, y)
+        return nn.SoftmaxLoss(self.run(xs), y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
-        batch_size = 100
-        loss = float('inf')
         valid_acc = 0
-        while valid_acc < .85:
-            for x, y in dataset.iterate_once(batch_size):
+        while valid_acc < .81:
+            for x, y in dataset.iterate_once(self.batch_size):
                 loss = self.get_loss(x, y)
-                grads = nn.gradients(loss, self.params)
-                loss = nn.as_scalar(loss)
-                for i in range(len(self.params)):
-                    self.params[i].update(grads[i], -self.lr)
+                gradient = nn.gradients(loss, [self.init_w, self.init_b, self.x_w, self.h_w,
+                       self.b, self.output_w, self.output_b])
+                self.init_w.update(gradient[0], -self.lr)
+                self.init_b.update(gradient[1], -self.lr)
+                self.x_w.update(gradient[2], -self.lr)
+                self.h_w.update(gradient[3], -self.lr)
+                self.b.update(gradient[4], -self.lr)
+                self.output_w.update(gradient[5], -self.lr)
+                self.output_b.update(gradient[6], -self.lr)
             valid_acc = dataset.get_validation_accuracy()
