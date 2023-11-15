@@ -136,14 +136,25 @@ class DigitClassificationModel(object):
     methods here. We recommend that you implement the RegressionModel before
     working on this part of the project.)
     """
+
     def __init__(self):
         # Initialize your model parameters here
-        "*** YOUR CODE HERE ***"
         self.batch_size = 2
-        self.wf = nn.Parameter(784, 60)
-        self.bf = nn.Parameter(1, 60)
-        self.wr = nn.Parameter(60, 10)
-        self.br = nn.Parameter(1, 10)
+        self.lr = -0.009
+        self.w1 = nn.Parameter(784, 60)
+        self.b1 = nn.Parameter(1, 60)
+
+        self.w2 = nn.Parameter(60, 10)
+        self.b2 = nn.Parameter(1, 10)
+
+        # self.w3 = nn.Parameter(128, 64)
+        # self.b3 = nn.Parameter(1, 64)
+
+        # self.w4 = nn.Parameter(64, 10)
+        # self.b4 = nn.Parameter(1, 10)
+
+        # self.params = [self.w1, self.b1, self.w2, self.b2,
+        #                self.w3, self.b3, self.w4, self.b4]
 
     def run(self, x):
         """
@@ -159,9 +170,10 @@ class DigitClassificationModel(object):
             A node with shape (batch_size x 10) containing predicted scores
                 (also called logits)
         """
-        "*** YOUR CODE HERE ***"
-        relued = nn.ReLU(nn.AddBias(nn.Linear(x, self.wf), self.bf))
-        return nn.AddBias(nn.Linear(relued, self.wr), self.br)
+
+        first_layer = nn.ReLU(nn.AddBias(nn.Linear(x, self.w1), self.b1))
+
+        return nn.AddBias(nn.Linear(first_layer, self.w2), self.b2)
 
     def get_loss(self, x, y):
         """
@@ -176,28 +188,23 @@ class DigitClassificationModel(object):
             y: a node with shape (batch_size x 10)
         Returns: a loss node
         """
-        "*** YOUR CODE HERE ***"
         return nn.SoftmaxLoss(self.run(x), y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
-        "*** YOUR CODE HERE ***"
-        mistakes = 1
-        while mistakes > 0:
-            mistakes = 0
+        loss = float('inf')
+        valid_acc = 0
+        while valid_acc < .97:
             for x, y in dataset.iterate_once(self.batch_size):
-                losses = self.get_loss(x, y)
-                gradient = nn.gradients(losses, [self.wf, self.wr, self.bf, self.br])
-                self.wf.update(gradient[0], -0.009)
-                self.wr.update(gradient[1], -0.009)
-                self.bf.update(gradient[2], -0.009)
-                self.br.update(gradient[3], -0.009)
-                
-            val = dataset.get_validation_accuracy()
-            if val < 0.97:
-                mistakes += 1
+                loss = self.get_loss(x, y)
+                gradient = nn.gradients(loss, [self.w1, self.w2, self.b1, self.b2])
+                self.w1.update(gradient[0], self.lr)
+                self.w2.update(gradient[1], self.lr)
+                self.b1.update(gradient[2], self.lr)
+                self.b2.update(gradient[3], self.lr)
+            valid_acc = dataset.get_validation_accuracy()
 
 
 class LanguageIDModel(object):
