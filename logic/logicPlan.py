@@ -445,7 +445,40 @@ def foodLogicPlan(problem) -> List:
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    KB.append(PropSymbolExpr(pacman_str, x0, y0, time=0))
+    for x, y in food:
+        KB.append(PropSymbolExpr(food_str, x, y, time=0))
+
+    for timestep in range(50):
+        print(timestep)
+
+        list_pacman = []
+        for x, y in non_wall_coords:
+            list_pacman.append(PropSymbolExpr(pacman_str, x, y, time=timestep))
+        KB.append(exactlyOne(list_pacman))
+
+        list_actions = []
+        for action in DIRECTIONS:
+            list_actions.append(PropSymbolExpr(action, time=timestep))
+        KB.append(exactlyOne(list_actions))
+
+        if timestep > 0:
+            for x, y in non_wall_coords:
+                KB.append(pacmanSuccessorAxiomSingle(x, y, timestep, walls))
+
+        """If pacman not where the food is then the food will be there for t+1 as well"""
+        for x, y in all_coords:
+            KB.append((PropSymbolExpr(food_str, x, y, time=timestep) & ~PropSymbolExpr(pacman_str, x, y,
+                                                                                       time=timestep)) >> PropSymbolExpr(
+                food_str, x, y, time=timestep + 1))
+
+        list_food_expr = []
+        for x, y in food:
+            list_food_expr.append(PropSymbolExpr(food_str, x, y, time=timestep))
+
+        """If there is food left then we are not in goal state"""
+        if findModel(conjoin(KB) & ~atLeastOne(list_food_expr)) != False:
+            return extractActionSequence(findModel(conjoin(KB) & ~atLeastOne(list_food_expr)), actions)
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
